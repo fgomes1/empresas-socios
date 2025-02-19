@@ -135,9 +135,16 @@ class SocioController extends AbstractController
             new OA\Response(response: 404, description: 'Sócio não encontrado')
         ]
     )]
-    public function show(int $empresaId, Socio $socio): JsonResponse
+    public function show(int $empresaId, int $id, EntityManagerInterface $em): JsonResponse
     {
+        $socio = $em->getRepository(Socio::class)->find($id);
+        if (!$socio) {
+            return $this->json(['error' => 'Sócio não encontrado'], Response::HTTP_NOT_FOUND);
+        }
         return $this->json($socio, Response::HTTP_OK, [], [
+            'circular_reference_handler' => function ($object) {
+                return $object->getId();
+            },
             'groups' => ['socio']
         ]);
     }
@@ -217,8 +224,12 @@ class SocioController extends AbstractController
             new OA\Response(response: 404, description: 'Sócio não encontrado')
         ]
     )]
-    public function delete(Socio $socio, EntityManagerInterface $em): JsonResponse
+    public function delete(int $empresaId, int $id, EntityManagerInterface $em): JsonResponse
     {
+        $socio = $em->getRepository(Socio::class)->find($id);
+        if (!$socio) {
+            return $this->json(['error' => 'Sócio não encontrado'], Response::HTTP_NOT_FOUND);
+        }
         $em->remove($socio);
         $em->flush();
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
