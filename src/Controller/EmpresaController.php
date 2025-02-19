@@ -17,7 +17,7 @@ class EmpresaController extends AbstractController
 {
     #[Route('', name: 'empresa_list', methods: ['GET'])]
     #[OA\Get(
-        summary: 'Listar todas as empresas',
+        summary: 'Lista todas as empresas',
         description: 'Retorna uma lista de todas as empresas cadastradas.',
         responses: [
             new OA\Response(
@@ -34,12 +34,14 @@ class EmpresaController extends AbstractController
     public function index(EmpresaRepository $empresaRepository): JsonResponse
     {
         $empresas = $empresaRepository->findAll();
-        return $this->json($empresas);
+        return $this->json($empresas, Response::HTTP_OK, [], [
+            'groups' => ['empresa']
+        ]);
     }
 
     #[Route('', name: 'empresa_create', methods: ['POST'])]
     #[OA\Post(
-        summary: 'Criar uma nova empresa',
+        summary: 'Cria uma nova empresa',
         description: 'Cria uma nova empresa com os dados informados.',
         requestBody: new OA\RequestBody(
             required: true,
@@ -51,7 +53,11 @@ class EmpresaController extends AbstractController
             )
         ),
         responses: [
-            new OA\Response(response: 201, description: 'Empresa criada com sucesso', content: new OA\JsonContent(ref: '#/components/schemas/Empresa')),
+            new OA\Response(
+                response: 201,
+                description: 'Empresa criada com sucesso',
+                content: new OA\JsonContent(ref: '#/components/schemas/Empresa')
+            ),
             new OA\Response(response: 400, description: 'Dados inválidos'),
             new OA\Response(response: 500, description: 'Erro interno')
         ]
@@ -59,23 +65,21 @@ class EmpresaController extends AbstractController
     public function create(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
         if (empty($data['nome'])) {
             return new JsonResponse(['error' => 'O campo "nome" é obrigatório'], Response::HTTP_BAD_REQUEST);
         }
-
         $empresa = new Empresa();
         $empresa->setNome($data['nome']);
-
         $em->persist($empresa);
         $em->flush();
-
-        return new JsonResponse($empresa, Response::HTTP_CREATED);
+        return $this->json($empresa, Response::HTTP_CREATED, [], [
+            'groups' => ['empresa']
+        ]);
     }
 
     #[Route('/{id}', name: 'empresa_show', methods: ['GET'])]
     #[OA\Get(
-        summary: 'Exibir detalhes de uma empresa',
+        summary: 'Exibe detalhes de uma empresa',
         description: 'Retorna os detalhes de uma empresa especificada pelo ID.',
         parameters: [
             new OA\Parameter(
@@ -87,18 +91,24 @@ class EmpresaController extends AbstractController
             )
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Detalhes da empresa', content: new OA\JsonContent(ref: '#/components/schemas/Empresa')),
+            new OA\Response(
+                response: 200,
+                description: 'Detalhes da empresa',
+                content: new OA\JsonContent(ref: '#/components/schemas/Empresa')
+            ),
             new OA\Response(response: 404, description: 'Empresa não encontrada')
         ]
     )]
     public function show(Empresa $empresa): JsonResponse
     {
-        return $this->json($empresa);
+        return $this->json($empresa, Response::HTTP_OK, [], [
+            'groups' => ['empresa', 'empresa_details']
+        ]);
     }
 
     #[Route('/{id}', name: 'empresa_update', methods: ['PUT'])]
     #[OA\Put(
-        summary: 'Atualizar uma empresa',
+        summary: 'Atualiza uma empresa',
         description: 'Atualiza os dados de uma empresa existente.',
         parameters: [
             new OA\Parameter(
@@ -118,7 +128,11 @@ class EmpresaController extends AbstractController
             )
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Empresa atualizada com sucesso', content: new OA\JsonContent(ref: '#/components/schemas/Empresa')),
+            new OA\Response(
+                response: 200,
+                description: 'Empresa atualizada com sucesso',
+                content: new OA\JsonContent(ref: '#/components/schemas/Empresa')
+            ),
             new OA\Response(response: 400, description: 'Dados inválidos'),
             new OA\Response(response: 404, description: 'Empresa não encontrada')
         ]
@@ -126,19 +140,18 @@ class EmpresaController extends AbstractController
     public function update(Request $request, Empresa $empresa, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-
         if (isset($data['nome'])) {
             $empresa->setNome($data['nome']);
         }
-
         $em->flush();
-
-        return new JsonResponse($empresa);
+        return $this->json($empresa, Response::HTTP_OK, [], [
+            'groups' => ['empresa', 'empresa_details']
+        ]);
     }
 
     #[Route('/{id}', name: 'empresa_delete', methods: ['DELETE'])]
     #[OA\Delete(
-        summary: 'Remover uma empresa',
+        summary: 'Remove uma empresa',
         description: 'Remove uma empresa pelo ID.',
         parameters: [
             new OA\Parameter(
@@ -158,7 +171,6 @@ class EmpresaController extends AbstractController
     {
         $em->remove($empresa);
         $em->flush();
-
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 }

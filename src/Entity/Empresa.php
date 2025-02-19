@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: "App\Repository\EmpresaRepository")]
 class Empresa
@@ -12,12 +13,15 @@ class Empresa
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: "integer")]
+    #[Groups(["empresa", "empresa_details", "socio_details"])]
     private ?int $id = null;
 
     #[ORM\Column(type: "string", length: 255)]
+    #[Groups(["empresa", "empresa_details", "socio_details"])]
     private ?string $nome = null;
 
-    #[ORM\OneToMany(targetEntity: "App\Entity\Socio", mappedBy: "empresa", cascade: ["persist", "remove"])]
+    #[ORM\OneToMany(mappedBy: "empresa", targetEntity: Socio::class, cascade: ["persist", "remove"])]
+    #[Groups(["empresa_details"])]  
     private Collection $socios;
 
     public function __construct()
@@ -61,7 +65,6 @@ class Empresa
     public function removeSocio(Socio $socio): self
     {
         if ($this->socios->removeElement($socio)) {
-            // Se a relação for obrigatória, remova a associação
             if ($socio->getEmpresa() === $this) {
                 $socio->setEmpresa(null);
             }
