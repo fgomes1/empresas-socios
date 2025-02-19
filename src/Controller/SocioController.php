@@ -37,12 +37,16 @@ class SocioController extends AbstractController
                     items: new OA\Items(ref: '#/components/schemas/Socio')
                 )
             ),
-            new OA\Response(response: 404, description: 'Empresa não encontrada'),
-            new OA\Response(response: 500, description: 'Erro interno')
+            new OA\Response(response: 404, description: 'Empresa não encontrada')
         ]
     )]
-    public function index(int $empresaId, Empresa $empresa): JsonResponse
+    public function index(int $empresaId, EntityManagerInterface $em): JsonResponse
     {
+        // Buscar a empresa manualmente
+        $empresa = $em->getRepository(Empresa::class)->find($empresaId);
+        if (!$empresa) {
+            return new JsonResponse(['error' => 'Empresa não encontrada'], Response::HTTP_NOT_FOUND);
+        }
         $socios = $empresa->getSocios();
         return $this->json($socios);
     }
@@ -76,8 +80,13 @@ class SocioController extends AbstractController
             new OA\Response(response: 500, description: 'Erro interno')
         ]
     )]
-    public function create(int $empresaId, Request $request, EntityManagerInterface $em, Empresa $empresa): JsonResponse
+    public function create(int $empresaId, Request $request, EntityManagerInterface $em): JsonResponse
     {
+        $empresa = $em->getRepository(Empresa::class)->find($empresaId);
+        if (!$empresa) {
+            return new JsonResponse(['error' => 'Empresa não encontrada'], Response::HTTP_NOT_FOUND);
+        }
+
         $data = json_decode($request->getContent(), true);
 
         if (empty($data['nome'])) {
